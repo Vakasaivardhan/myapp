@@ -3,9 +3,7 @@ const http = require("http");
 const port = process.env.PORT || 3000;
 
 const server = http.createServer((req, res) => {
-    res.write("Hello! thi is the sample project");
-    
-    // res.write("Hello! Your Jenkins + Docker pipeline deployed this Node app.");
+    res.write("🚀 New Build Deployed Successfully! This is the updated version of the Node.js application.");
     res.end();
 });
 
