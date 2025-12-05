@@ -19,7 +19,7 @@ pipeline {
         stage('Build Docker image') {
             steps {
                 // Build the Docker image from Dockerfile in the repo
-                sh "docker build -t ${IMAGE_NAME}:latest ."
+                sh "docker build --no-cache -t ${IMAGE_NAME}:latest ."
             }
         }
 
