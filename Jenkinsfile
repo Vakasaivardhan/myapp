@@ -1,39 +1,57 @@
+
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME     = "myapp-image"
+        CONTAINER_NAME = "myapp-container"
+        APP_PORT       = "3000"
+    }
+
     stages {
-        stage('Checkout') {
+        stage('Checkout from Git') {
             steps {
-                // Get code from GitHub
+                // This is your "git clone" – Jenkins checks out the repo
                 checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Docker image') {
             steps {
-                // Build Docker image using Docker Desktop
-                bat 'docker build -t myapp:latest .'
+                // Build the Docker image from Dockerfile in the repo
+                sh "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
-        stage('Run Container') {
+        stage('Stop old container (if running)') {
             steps {
-                // Stop and remove old container if it exists (ignore errors)
-                bat 'docker stop myapp || exit 0'
-                bat 'docker rm myapp || exit 0'
+                // Remove old container so we can run a fresh one
+                sh """
+                    if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
+                      echo "Stopping and removing existing container..."
+                      docker rm -f ${CONTAINER_NAME}
+                    else
+                      echo "No existing container found."
+                    fi
+                """
+            }
+        }
 
-                // Run new container
-                bat 'docker run -d -p 3000:3000 --name myapp myapp:latest'
+        stage('Run new container') {
+            steps {
+                // Start new container mapped to localhost:3000
+                sh "docker run -d --name ${CONTAINER_NAME} -p ${APP_PORT}:${APP_PORT} ${IMAGE_NAME}:latest"
             }
         }
     }
 
     post {
         success {
-            echo '✅ App deployed! Open http://<your-machine-ip>:3000'
+            echo "✅ Deployed! Open http://localhost:${APP_PORT} (or http://<host-ip>:${APP_PORT})"
         }
         failure {
-            echo '❌ Build failed. Check the console log.'
+            echo "❌ Pipeline failed. Check console output."
         }
     }
 }
+
